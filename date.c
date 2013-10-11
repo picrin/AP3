@@ -110,8 +110,8 @@ Date* date_duplicate(Date *d){
   date_ptr = (Date*) malloc(sizeof(Date));
   if (date_ptr == NULL) return NULL;
   date_ptr->day = d->day;
-  date_ptr->month = date_ptr->month;
-  date_ptr->year = date_ptr->year;
+  date_ptr->month = d->month;
+  date_ptr->year = d->year;
   return date_ptr;
 }
 
@@ -142,7 +142,9 @@ void printdate(Date a_date){
 
 
 int main(){
-  printdate(*date_create("12/12/1311"));
+  Date* date1 = date_create("31/50/1991");
+  printdate(*date1);
+  printdate(*date_duplicate(date1));
   //printf("%i\n", all_chars(&validate_slash, 4, 8, '/', '/', '/'));
   return 0;
 }
