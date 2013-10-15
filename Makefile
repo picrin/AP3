@@ -2,7 +2,7 @@
 COMP=clang
 #COMP=gcc
 
-CFLAGS= -std=c1x -Wall -W -pedantic
+CFLAGS=-std=c99 -Wall -W -pedantic
 main: main.o date.o
 	$(COMP) $(CFLAGS) main.o date.o -o main
 
@@ -11,3 +11,5 @@ main.o: main.c
 
 date.o: date.h date.c
 	$(COMP) $(CFLAGS) -c date.c -o date.o
+clean:
+	rm *.o

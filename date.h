@@ -3,12 +3,15 @@
 
 /* changes to date.h */ /* do not rely on those, as Joe won't get your date.h!!!! */
 #include <stdbool.h>
+typedef struct date Date;
+void printdate(Date* a_date);
 int digest_int(char* datestr_ptr, int length);
 #define VALIDATE_INPUT
 /* end of changes to date.h */
 
 
-typedef struct date Date;
+//typedef struct date Date;
+
 
 /*
  * date_create creates a Date structure from `datestr`

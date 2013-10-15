@@ -9,6 +9,7 @@
 #define true 1
 #define false 0
 #define elif else if
+
 typedef unsigned char siter;
 typedef int iter;
 
@@ -51,7 +52,7 @@ static int power(int a, int b){
     return correct;
   }
   
-  static inline bool validate_slash(char a_char){
+static inline bool validate_slash(char a_char){
     return (a_char == '/');
   }
   //int(*compar)(const void *, const void *)
@@ -87,26 +88,38 @@ int digest_int(char* datestr_ptr, int length){
 
 Date* date_create(char* datestr_ptr){
   Date* date_ptr;
+  int day;
+  int month;
+  int year;
+
   #ifdef VALIDATE_INPUT
-  if (
-      *(datestr_ptr + 10) != '\0' ||
-      !all_chars(&validate_slash, 2,
-          *(datestr_ptr + 2),
-          *(datestr_ptr + 5)
-      )
-  ) return NULL;
+    if (
+        *(datestr_ptr + 10) != '\0' ||
+        !all_chars(&validate_slash, 2,
+            *(datestr_ptr + 2),
+            *(datestr_ptr + 5)
+        )
+    ) return NULL;
   #endif /* VALIDATE_INPUT */
-  
+  day = digest_int(datestr_ptr, 2);
+  month = digest_int(datestr_ptr + 3, 2);
+  year = digest_int(datestr_ptr + 6, 4);
+  #ifdef VALIDATE_INPUT
+    if (day == -1) return NULL;
+    if (month == -1) return NULL;
+    if (year == -1) return NULL;
+  #endif /* VALIDATE_INPUT */
   date_ptr = (Date*) malloc(sizeof(Date));
   if (date_ptr == NULL) return NULL;
-  date_ptr->day = digest_int(datestr_ptr, 2);
-  date_ptr->month = digest_int(datestr_ptr + 3, 2);
-  date_ptr->year = digest_int(datestr_ptr + 6, 4);
+  date_ptr->day = day;
+  date_ptr->month = month;
+  date_ptr->year = year;
   return date_ptr;
 }
 
 Date* date_duplicate(Date *d){
   Date* date_ptr;
+  if (d == NULL) return NULL;
   date_ptr = (Date*) malloc(sizeof(Date));
   if (date_ptr == NULL) return NULL;
   date_ptr->day = d->day;
@@ -135,16 +148,8 @@ int date_compare(Date* date1, Date* date2){
   }
 }
 
-void printdate(Date a_date){
-  printf("%i/%i/%i\n", a_date.day, a_date.month, a_date.year);
-}
 
-
-
-int main(){
-  Date* date1 = date_create("31/50/1991");
-  printdate(*date1);
-  printdate(*date_duplicate(date1));
-  //printf("%i\n", all_chars(&validate_slash, 4, 8, '/', '/', '/'));
-  return 0;
+void printdate(Date* a_date){
+  if (a_date == NULL) printf("%s", "NULL");
+  else printf("%i/%i/%i\n", a_date->day, a_date->month, a_date->year);
 }
