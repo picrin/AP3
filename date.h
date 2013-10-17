@@ -6,6 +6,13 @@
 typedef struct date Date;
 void printdate(Date* a_date);
 int digest_int(char* datestr_ptr, int length);
+
+/* comment out the line below if you DO NOT want the
+ * program to validate the input. Switching off the validation
+ * might be a security issue, but if the input is trusted, it might
+ * speed up program's execution.
+ */
+
 #define VALIDATE_INPUT
 /* end of changes to date.h */
 
