@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "date.h"
 #include "tldlist.h"
+#define elif else if
 /*
 int main(){
   //char* buffer = (char*) malloc(sizeof(char)*10);
@@ -81,20 +82,54 @@ TLDNode* tldlist_iter_next(TLDIterator* iter){
   return next;
 }
 
+static TLDNode* find_neighbourhood( TLDList* tld_list, char* tld_char){
+  if (tld -> head ==  NULL) return NULL;
+  else return find_neighbourhood_rec(tld_list -> head, tld_char);
+} 
+
+static TLDNode* find_neighbourhood_rec( TLDNode* node, char* tld_char ){
+  int compares;
+  bool is_rightNULL;
+  bool is_leftNULL;
+  compares = compare_tlds(node -> tld, tld_char);
+  is_rightNULL = (node -> right == NULL);
+  is_leftNULL = (node -> left == NULL);
+  if (is_leftNULL && is_rightNULL)
+    || (compare == 0)
+    || (is_rightNULL && compare > 0)
+    || (is_leftNULL && compare < 0)
+    return node;
+  elif (compare > 0)
+    return  find_neighbourhood_rec( node -> right, tld_char);  
+  elif (compare < 0)
+    return  find_neighbourhood_rec( node -> left, tld_char);
+}
+
+static TLDNode* finish_off_neighbourhood
+
 int tldlist_add(TLDList* tld, char* hostname, Date* d){
-  
+ char *tld = allo_init_tld(hostname);
+ 
 }
 
 int tldnode_add(TLDNode* node, char*);
 
 static char* allo_init_tld(char* hostname){
   char* last_dot;
+  char* new_mem;
+  int i;
   for(;*hostname; hostname++){if (*hostname == '.') last_dot = hostname;}
-  printf("%d,%d,%d", hostname - last_dot, hostname, last_dot);
-  //malloc /* you shall free that memory when destroying */
-  return last_dot; 
+  //printf("%d, %d, %d", hostname - last_dot, hostname, last_dot);
+  //printf("%c, %c, %c, %i, %i, %i", *last_dot, *(last_dot + 1), *(last_dot + 2), *(last_dot + 3), *hostname, *(hostname + 1));
+  new_mem = (char*) malloc(sizeof(char) * (hostname - last_dot)); /* you shall free that memory when destroying  */
+  for(i = 0, last_dot++; *last_dot; last_dot++, i++){ *(new_mem + i) = *last_dot;}
+    *(new_mem + i) = '\0';
+  return new_mem;
 }
 int main() {
-  allo_init_tld("adam.kurkiewicz.pl"); 
+  char* fuckyou;
+  fuckyou = allo_init_tld("adam.kurkiewicz.pl");
+  printf("%s, adflsdjfh", fuckyou);
+  free(fuckyou);
   return 0;
 }
