@@ -1,10 +1,10 @@
 #compiler
-COMP=clang
+#COMP=clang
 #COMP=gcc
 
-CFLAGS=-std=c99 -Wall -W -pedantic -Wfatal-errors -v
+CFLAGS=-std=c99 -Wall -W -pedantic -Wfatal-errors
 main: date.o tldlist.o main.o
-	$(COMP) $(CFLAGS) date.o -o main #main.o
+	$(COMP) $(CFLAGS) date.o -o main main.o
 
 main.o: main.c
 	$(COMP) $(CFLAGS) -c main.c -o main.o

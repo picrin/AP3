@@ -33,6 +33,23 @@ struct tldnode{
   int count;
 };
 
+
+
+static TLDNode* create_empty_node(){
+  TLDNode* empty;
+  empty = (TLDNode*) malloc(sizeof(TLDNode));
+  empty -> tld = NULL;
+  empty -> right = NULL;
+  empty -> left = NULL;
+  empty -> up = NULL;
+  empty -> count = 0;
+  return empty;
+}
+static bool is_empty(TLDNode* allegedly_empty){
+  return ((allegedly_empty -> tld) == NULL); 
+}
+
+
 struct tlditerator{
   TLDNode* tldnode_ptr;
 };
@@ -46,70 +63,94 @@ TLDList* tldlist_create(Date *begin, Date *end){
   
   list_ptr = (TLDList*) malloc(sizeof(TLDList));
   if (!list_ptr) return NULL;
-  list_ptr -> begin = NULL;
-  list_ptr -> end = NULL;
+  list_ptr -> begin = begin;
+  list_ptr -> end = end;
+  list_ptr -> counter = 0;
+  list_ptr -> head = create_empty_node();
   return list_ptr;
+}
+static TLDNode* leftmost(TLDNode* node){
+  while(!is_empty(node)){
+    node = node->left;
+  }
+  return node;
 }
 
 TLDIterator *tldlist_iter_create(TLDList *tld){
-  TLDNode* current_leftmost;
   TLDIterator* returned;
-  current_leftmost = tld->head;
-  while(current_leftmost != NULL){
-    current_leftmost = current_leftmost->left;
-  }
+  TLDNode* leftmost_node;
   returned = (TLDIterator*) malloc(sizeof(TLDIterator));
   if (!returned) return NULL;
-  returned -> tldnode_ptr = current_leftmost;
+  leftmost_node = leftmost(tld -> head);
+  (returned -> tldnode_ptr) = leftmost_node;
   return returned;
 }
 
 static TLDNode* first_non_right_child(TLDNode* node_ptr){
-  if ((node_ptr -> up) == NULL) return NULL;
-  if ((node_ptr -> up -> right) == node_ptr) return first_non_right_child(node_ptr -> up);
+  if (is_empty(node_ptr -> up)) return node_ptr -> up;
+  elif ((node_ptr -> up -> right) == node_ptr) return first_non_right_child(node_ptr -> up);
   else return node_ptr;
+}
+
+/* returns -1 if left child, 1 if right child and 0 if head */
+static int lef_or_right(TLDNode* node){
+  if (is_empty(node -> up)) return 0;
+  elif (node -> up -> left == node) return -1;
+  else return 1;
 }
 
 TLDNode* tldlist_iter_next(TLDIterator* iter){
   TLDNode* node_ptr;
   TLDNode* go_up;
+  int left_right;
   node_ptr = iter -> tldnode_ptr;
-  if ((node_ptr -> right) != NULL) return node_ptr -> right;
+  left_right = left_or_right(node_ptr); 
+  if (left_right == 0) return NULL;
+  elif (left_right == -1) return node_ptr -> up;
+  else
   go_up = first_non_right_child(node_ptr);
-  if (go_up == NULL) return NULL;
+  if (is_empty(go_up)) return NULL;
   TLDNode* next = go_up -> up -> right;
   iter -> tldnode_ptr = next;
   return next;
 }
 
-static TLDNode* find_neighbourhood( TLDList* tld_list, char* tld_char){
-  if (tld -> head ==  NULL) return NULL;
-  else return find_neighbourhood_rec(tld_list -> head, tld_char);
-} 
-
-static TLDNode* find_neighbourhood_rec( TLDNode* node, char* tld_char ){
+static TLDNode* find_node_rec( TLDNode* node, char* tld_char ){
   int compares;
-  bool is_rightNULL;
-  bool is_leftNULL;
+  bool is_right_empty;
+  bool is_left_empty;
   compares = compare_tlds(node -> tld, tld_char);
-  is_rightNULL = (node -> right == NULL);
-  is_leftNULL = (node -> left == NULL);
-  if (is_leftNULL && is_rightNULL)
-    || (compare == 0)
-    || (is_rightNULL && compare > 0)
-    || (is_leftNULL && compare < 0)
-    return node;
-  elif (compare > 0)
-    return  find_neighbourhood_rec( node -> right, tld_char);  
-  elif (compare < 0)
-    return  find_neighbourhood_rec( node -> left, tld_char);
+  is_right_empty = is_empty(node -> right);
+  is_left_empty = is_empty(node -> left);
+  
+  if (is_empty(node) || (compares == 0)) return node;
+  elif (compares < 0)
+     if (is_left_empty) return node -> left;
+     else return find_node_rec(node -> left, tld_char);
+  else
+     if (is_right_empty) return node -> right;
+     else return find_node_rec(node -> right, tld_char);
 }
 
-static TLDNode* finish_off_neighbourhood
+static TLDNode* find_node (TLDList* tld_list, char* tld_char){
+  return find_node_rec(tld_list -> head, tld_char);
+} 
+
+static int hit_node(TLDNode* node, char* tld_char){
+  if (is_empty(node)){
+    (node -> right) = create_empty_node();
+    (node -> left) = create_empty_node();
+    node -> tld = tld_char;
+    node -> count = 1;
+  }
+  else{
+    (node -> count )++;
+  }
+}
 
 int tldlist_add(TLDList* tld, char* hostname, Date* d){
- char *tld = allo_init_tld(hostname);
- 
+  //char *tld = allo_init_tld(hostname);
+  return 0;
 }
 
 int tldnode_add(TLDNode* node, char*);
@@ -127,9 +168,9 @@ static char* allo_init_tld(char* hostname){
   return new_mem;
 }
 int main() {
-  char* fuckyou;
-  fuckyou = allo_init_tld("adam.kurkiewicz.pl");
-  printf("%s, adflsdjfh", fuckyou);
-  free(fuckyou);
+  char* hostname;
+  int tld;
+  hostname = "adam.kurkiewicz.pl";
+  tld = allo_init_tld;
   return 0;
 }
