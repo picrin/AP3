@@ -93,7 +93,7 @@ static TLDNode* first_non_right_child(TLDNode* node_ptr){
 }
 
 /* returns -1 if left child, 1 if right child and 0 if head */
-static int lef_or_right(TLDNode* node){
+static int left_or_right(TLDNode* node){
   if (is_empty(node -> up)) return 0;
   elif (node -> up -> left == node) return -1;
   else return 1;
@@ -167,10 +167,25 @@ static char* allo_init_tld(char* hostname){
     *(new_mem + i) = '\0';
   return new_mem;
 }
+
+char* unsafe_yaml(TLDNode* node){
+  char[4096] totalchar;
+  strcat(totalchar,"#YAML\nbinary tree:")
+  return unsafe_inorder_rec(TLDNode* node, totalchar, 1); 
+}
+
+char* unsafe_yaml_rec(TLDNode* node, char* appendto, int indentation_level){
+  int i;
+  for (i = 0; i < 2*indentation_level; i++) strcat(appendto, " ");
+  strcat(totalchar, *
+}
+
 int main() {
   char* hostname;
   int tld;
+  TLDNode* node;
   hostname = "adam.kurkiewicz.pl";
+  node = create_empty_node();
   tld = allo_init_tld;
   return 0;
 }

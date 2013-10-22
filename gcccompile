@@ -1,2 +1,2 @@
 export COMP=gcc
-make -B 2>&1 | less
+make -B
