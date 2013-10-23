@@ -124,12 +124,13 @@ static TLDNode* find_node_rec( TLDNode* node, char* tld_char ){
   is_left_empty = is_empty(node -> left);
   
   if (is_empty(node) || (compares == 0)) return node;
-  elif (compares < 0)
+  elif (compares < 0){
      if (is_left_empty) return node -> left;
      else return find_node_rec(node -> left, tld_char);
-  else
+  } else {
      if (is_right_empty) return node -> right;
      else return find_node_rec(node -> right, tld_char);
+  }
 }
 
 static TLDNode* find_node (TLDList* tld_list, char* tld_char){
@@ -169,23 +170,54 @@ static char* allo_init_tld(char* hostname){
 }
 
 char* unsafe_yaml(TLDNode* node){
-  char[4096] totalchar;
-  strcat(totalchar,"#YAML\nbinary tree:")
-  return unsafe_inorder_rec(TLDNode* node, totalchar, 1); 
+  char totalchar[4096]; //unsafe, this might be too small
+  strcat(totalchar,"#YAML 1.2\nbinary tree:\n  head:\n");
+  unsafe_yaml_rec(node, totalchar, 2); 
+  return totalchar;
 }
 
-char* unsafe_yaml_rec(TLDNode* node, char* appendto, int indentation_level){
+static void indent(char* appendto, int indentation_level){
   int i;
   for (i = 0; i < 2*indentation_level; i++) strcat(appendto, " ");
-  strcat(totalchar, *
+} 
+
+void unsafe_yaml_rec(TLDNode* node, char* appendtto, int indentation_level){
+  indent(appendtto, indentation_level);
+  strcat(appendtto, "- node:\n");
+  indent(appendtto, indentation_level + 1);  
+  if (is_empty(node)){
+    strcat(appendtto, "tld: ");
+    strcat(appendtto, "empty\n");
+    return;
+  } else {
+    strcat(appendtto, "tld: ");
+    strcat(appendtto, node -> tld);
+    strcat(appendtto, "\n");
+    indent(appendtto, indentation_level + 1);
+    strcat(appendtto, "nodes:\n");
+    unsafe_yaml_rec(node -> left, appendtto, indentation_level + 2);
+    unsafe_yaml_rec(node -> right, appendtto, indentation_level + 2);
+    return;
+  }
 }
 
 int main() {
   char* hostname;
   int tld;
-  TLDNode* node;
+  TLDNode *node, *node_left, *node_right, *node_ll, *node_lr;
   hostname = "adam.kurkiewicz.pl";
   node = create_empty_node();
+  node_left = create_empty_node();
+  node_ll = create_empty_node();
+  node_lr = create_empty_node();
+  node_right = create_empty_node();
+  node -> left = node_left;
+  node -> left -> tld = "1";
+  node -> left -> left = node_ll;
+  node -> left -> right = node_lr;
+  node -> right = node_right;
+  node -> tld = "2";
+  printf("%s", unsafe_yaml(node));
   tld = allo_init_tld;
   return 0;
 }
