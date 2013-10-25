@@ -115,19 +115,34 @@ TLDNode* tldlist_iter_next(TLDIterator* iter){
   return next;
 }
 
+static char* allo_init_tld(char* hostname){
+  char* last_dot;
+  char* new_mem;
+  int i;
+  for(;*hostname; hostname++){if (*hostname == '.') last_dot = hostname;}
+  //printf("%d, %d, %d", hostname - last_dot, hostname, last_dot);
+  //printf("%c, %c, %c, %i, %i, %i", *last_dot, *(last_dot + 1), *(last_dot + 2), *(last_dot + 3), *hostname, *(hostname + 1));
+  new_mem = (char*) malloc(sizeof(char) * (hostname - last_dot)); /* you shall free that memory when destroying  */
+  for(i = 0, last_dot++; *last_dot; last_dot++, i++){ *(new_mem + i) = *last_dot;}
+    *(new_mem + i) = '\0';
+  return new_mem;
+}
 static TLDNode* find_node_rec( TLDNode* node, char* tld_char ){
   int compares;
   bool is_right_empty;
   bool is_left_empty;
   compares = compare_tlds(node -> tld, tld_char);
+  if (is_empty(node)) return node;
   is_right_empty = is_empty(node -> right);
   is_left_empty = is_empty(node -> left);
   
-  if (is_empty(node) || (compares == 0)) return node;
+  if (compares == 0) return node;
   elif (compares < 0){
+     printf("%s < %s\n", tld_char, node -> tld);
      if (is_left_empty) return node -> left;
      else return find_node_rec(node -> left, tld_char);
   } else {
+     printf("%s > %s\n", tld_char, node -> tld);
      if (is_right_empty) return node -> right;
      else return find_node_rec(node -> right, tld_char);
   }
@@ -147,33 +162,16 @@ static int hit_node(TLDNode* node, char* tld_char){
   else{
     (node -> count )++;
   }
+  return node -> count;
 }
 
 int tldlist_add(TLDList* tld, char* hostname, Date* d){
-  //char *tld = allo_init_tld(hostname);
-  return 0;
-}
-
-int tldnode_add(TLDNode* node, char*);
-
-static char* allo_init_tld(char* hostname){
-  char* last_dot;
-  char* new_mem;
-  int i;
-  for(;*hostname; hostname++){if (*hostname == '.') last_dot = hostname;}
-  //printf("%d, %d, %d", hostname - last_dot, hostname, last_dot);
-  //printf("%c, %c, %c, %i, %i, %i", *last_dot, *(last_dot + 1), *(last_dot + 2), *(last_dot + 3), *hostname, *(hostname + 1));
-  new_mem = (char*) malloc(sizeof(char) * (hostname - last_dot)); /* you shall free that memory when destroying  */
-  for(i = 0, last_dot++; *last_dot; last_dot++, i++){ *(new_mem + i) = *last_dot;}
-    *(new_mem + i) = '\0';
-  return new_mem;
-}
-
-char* unsafe_yaml(TLDNode* node){
-  char totalchar[4096]; //unsafe, this might be too small
-  strcat(totalchar,"#YAML 1.2\nbinary tree:\n  head:\n");
-  unsafe_yaml_rec(node, totalchar, 2); 
-  return totalchar;
+  char* tld_char;
+  TLDNode* correct_node;
+  tld_char = allo_init_tld(hostname);
+  correct_node = find_node(tld, tld_char);
+  hit_node(correct_node, tld_char);
+  return correct_node -> count;
 }
 
 static void indent(char* appendto, int indentation_level){
@@ -200,11 +198,40 @@ void unsafe_yaml_rec(TLDNode* node, char* appendtto, int indentation_level){
     return;
   }
 }
+void unsafe_inorder_rec(TLDNode* node, char* appendtto, int indentation_level){
+  if (is_empty(node)){
+    strcat(appendtto, "(N)");
+    return;
+  } else {
+    strcat(appendtto, "(");
+    unsafe_inorder_rec(node -> left, appendtto, indentation_level + 2);
+    strcat(appendtto, node -> tld);
+    unsafe_inorder_rec(node -> right, appendtto, indentation_level + 2);
+    strcat(appendtto, ")");
+    return;
+  }
+}
+char* unsafe_yaml(TLDNode* node){
+  char* totalchar = malloc(sizeof(char)*4096); //unsafe, this might be too small
+  strcat(totalchar,"#YAML 1.2\nbinary tree:\n  head:\n");
+  unsafe_yaml_rec(node, totalchar, 2); 
+  return totalchar;
+}
+
+char* unsafe_inorder(TLDNode* node){
+  char* totalchar = malloc(sizeof(char)*4096); //unsafe, this might be too small
+  strcat(totalchar,"#inorder");
+  unsafe_inorder_rec(node, totalchar, 2); 
+  return totalchar;
+}
 
 int main() {
   char* hostname;
   int tld;
+  Date* dummydate;
   TLDNode *node, *node_left, *node_right, *node_ll, *node_lr;
+  TLDList* mylist;
+  dummydate = date_create("11/10/1991");
   hostname = "adam.kurkiewicz.pl";
   node = create_empty_node();
   node_left = create_empty_node();
@@ -217,7 +244,17 @@ int main() {
   node -> left -> right = node_lr;
   node -> right = node_right;
   node -> tld = "2";
-  printf("%s", unsafe_yaml(node));
-  tld = allo_init_tld;
+  printf("%d", strcmp("a", "c"));
+  //return strcmp(tldA, tldB);
+  //printf("%d",strcmp("hello", "aello"));
+  mylist = tldlist_create(dummydate, dummydate);
+  /*tldlist_add(mylist, ".a", dummydate);
+  tldlist_add(mylist, ".b", dummydate);
+  tldlist_add(mylist, ".c", dummydate);
+  tldlist_add(mylist, ".d", dummydate);
+  tldlist_add(mylist, ".e", dummydate);
+  tldlist_add(mylist, ".f", dummydate);
+  printf("%s", unsafe_inorder(mylist -> head));
+  */
   return 0;
 }

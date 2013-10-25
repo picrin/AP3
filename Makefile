@@ -2,7 +2,7 @@
 #COMP=clang
 #COMP=gcc
 
-CFLAGS=-std=c99 -Wall -W -pedantic -Wfatal-errors
+CFLAGS=-std=c99 -Wall -W -pedantic -Wfatal-errors -g -static
 main: date.o tldlist.o
 	$(COMP) $(CFLAGS) date.o tldlist.o -o main
 date.o: date.h date.c
