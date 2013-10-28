@@ -124,25 +124,24 @@ static char* allo_init_tld(char* hostname){
   //printf("%c, %c, %c, %i, %i, %i", *last_dot, *(last_dot + 1), *(last_dot + 2), *(last_dot + 3), *hostname, *(hostname + 1));
   new_mem = (char*) malloc(sizeof(char) * (hostname - last_dot)); /* you shall free that memory when destroying  */
   for(i = 0, last_dot++; *last_dot; last_dot++, i++){ *(new_mem + i) = *last_dot;}
-    *(new_mem + i) = '\0';
   return new_mem;
 }
 static TLDNode* find_node_rec( TLDNode* node, char* tld_char ){
   int compares;
   bool is_right_empty;
   bool is_left_empty;
-  compares = compare_tlds(node -> tld, tld_char);
   if (is_empty(node)) return node;
+  compares = compare_tlds(tld_char, node -> tld);
   is_right_empty = is_empty(node -> right);
   is_left_empty = is_empty(node -> left);
   
   if (compares == 0) return node;
   elif (compares < 0){
-     printf("%s < %s\n", tld_char, node -> tld);
+     //printf("%s < %s\n", tld_char, node -> tld);
      if (is_left_empty) return node -> left;
      else return find_node_rec(node -> left, tld_char);
   } else {
-     printf("%s > %s\n", tld_char, node -> tld);
+     //printf("%s > %s\n", tld_char, node -> tld);
      if (is_right_empty) return node -> right;
      else return find_node_rec(node -> right, tld_char);
   }
@@ -153,6 +152,7 @@ static TLDNode* find_node (TLDList* tld_list, char* tld_char){
 } 
 
 static int hit_node(TLDNode* node, char* tld_char){
+  /* this potentially deallocs memory from init_alloc */
   if (is_empty(node)){
     (node -> right) = create_empty_node();
     (node -> left) = create_empty_node();
@@ -179,25 +179,6 @@ static void indent(char* appendto, int indentation_level){
   for (i = 0; i < 2*indentation_level; i++) strcat(appendto, " ");
 } 
 
-void unsafe_yaml_rec(TLDNode* node, char* appendtto, int indentation_level){
-  indent(appendtto, indentation_level);
-  strcat(appendtto, "- node:\n");
-  indent(appendtto, indentation_level + 1);  
-  if (is_empty(node)){
-    strcat(appendtto, "tld: ");
-    strcat(appendtto, "empty\n");
-    return;
-  } else {
-    strcat(appendtto, "tld: ");
-    strcat(appendtto, node -> tld);
-    strcat(appendtto, "\n");
-    indent(appendtto, indentation_level + 1);
-    strcat(appendtto, "nodes:\n");
-    unsafe_yaml_rec(node -> left, appendtto, indentation_level + 2);
-    unsafe_yaml_rec(node -> right, appendtto, indentation_level + 2);
-    return;
-  }
-}
 void unsafe_inorder_rec(TLDNode* node, char* appendtto, int indentation_level){
   if (is_empty(node)){
     strcat(appendtto, "(N)");
@@ -210,12 +191,6 @@ void unsafe_inorder_rec(TLDNode* node, char* appendtto, int indentation_level){
     strcat(appendtto, ")");
     return;
   }
-}
-char* unsafe_yaml(TLDNode* node){
-  char* totalchar = malloc(sizeof(char)*4096); //unsafe, this might be too small
-  strcat(totalchar,"#YAML 1.2\nbinary tree:\n  head:\n");
-  unsafe_yaml_rec(node, totalchar, 2); 
-  return totalchar;
 }
 
 char* unsafe_inorder(TLDNode* node){
@@ -244,17 +219,15 @@ int main() {
   node -> left -> right = node_lr;
   node -> right = node_right;
   node -> tld = "2";
-  printf("%d", strcmp("a", "c"));
+  //printf("%d", strcmp("c", "d"));
   //return strcmp(tldA, tldB);
   //printf("%d",strcmp("hello", "aello"));
   mylist = tldlist_create(dummydate, dummydate);
-  /*tldlist_add(mylist, ".a", dummydate);
-  tldlist_add(mylist, ".b", dummydate);
-  tldlist_add(mylist, ".c", dummydate);
-  tldlist_add(mylist, ".d", dummydate);
-  tldlist_add(mylist, ".e", dummydate);
-  tldlist_add(mylist, ".f", dummydate);
-  printf("%s", unsafe_inorder(mylist -> head));
-  */
+  tldlist_add(mylist, ".2", dummydate);
+  tldlist_add(mylist, ".7", dummydate);
+  tldlist_add(mylist, ".1", dummydate);
+  tldlist_add(mylist, ".3", dummydate);
+  tldlist_add(mylist, ".5", dummydate);
+  //printf("%s", unsafe_inorder(mylist -> head));
   return 0;
 }
