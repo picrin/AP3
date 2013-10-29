@@ -20,7 +20,7 @@ TLDList *tldlist_create(Date *begin, Date *end);
  * tldlist_destroy destroys the list structure in `tld'
  *
  * all heap allocated storage associated with the list is returned to the heap
-*/
+ */
 void tldlist_destroy(TLDList *tld);
 
 /*

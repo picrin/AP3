@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
         return -2;
     }
     while ((n = tldlist_iter_next(it))) {
-        printf("%6.2f %s\n", 100.0 * (double)tldnode_count(n)/total, tldnode_tldname(n));
+        printf("%6.2f %s\n", 100.0 * ((double)tldnode_count(n))/total, tldnode_tldname(n));
     }
     tldlist_iter_destroy(it);
     tldlist_destroy(tld);

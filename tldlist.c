@@ -33,8 +33,6 @@ struct tldnode{
   int count;
 };
 
-
-
 static TLDNode* create_empty_node(){
   TLDNode* empty;
   empty = (TLDNode*) malloc(sizeof(TLDNode));
@@ -45,10 +43,10 @@ static TLDNode* create_empty_node(){
   empty -> count = 0;
   return empty;
 }
+
 static bool is_empty(TLDNode* allegedly_empty){
   return ((allegedly_empty -> tld) == NULL); 
 }
-
 
 struct tlditerator{
   TLDNode* tldnode_ptr;
@@ -70,7 +68,8 @@ TLDList* tldlist_create(Date *begin, Date *end){
   return list_ptr;
 }
 static TLDNode* leftmost(TLDNode* node){
-  while(!is_empty(node)){
+  //printf("%s", node);
+  while(!is_empty(node->left)){
     node = node->left;
   }
   return node;
@@ -82,21 +81,23 @@ TLDIterator *tldlist_iter_create(TLDList *tld){
   returned = (TLDIterator*) malloc(sizeof(TLDIterator));
   if (!returned) return NULL;
   leftmost_node = leftmost(tld -> head);
-  (returned -> tldnode_ptr) = leftmost_node;
+  (returned -> tldnode_ptr) = leftmost_node -> left;
   return returned;
-}
-
-static TLDNode* first_non_right_child(TLDNode* node_ptr){
-  if (is_empty(node_ptr -> up)) return node_ptr -> up;
-  elif ((node_ptr -> up -> right) == node_ptr) return first_non_right_child(node_ptr -> up);
-  else return node_ptr;
 }
 
 /* returns -1 if left child, 1 if right child and 0 if head */
 static int left_or_right(TLDNode* node){
-  if (is_empty(node -> up)) return 0;
-  elif (node -> up -> left == node) return -1;
+  if ((node -> up) == NULL) return 0;
+  elif (!is_empty(node -> up -> left) && node -> up -> left == node) return -1;
   else return 1;
+}
+
+static TLDNode* first_non_right_child(TLDNode* node_ptr){
+  int is_left_or_right;
+  is_left_or_right = left_or_right(node_ptr);
+  if (is_left_or_right == 0) return NULL;
+  elif (is_left_or_right == 1) return first_non_right_child(node_ptr -> up);
+  else return node_ptr;
 }
 
 TLDNode* tldlist_iter_next(TLDIterator* iter){
@@ -104,17 +105,28 @@ TLDNode* tldlist_iter_next(TLDIterator* iter){
   TLDNode* go_up;
   int left_right;
   node_ptr = iter -> tldnode_ptr;
-  left_right = left_or_right(node_ptr); 
-  if (left_right == 0) return NULL;
-  elif (left_right == -1) return node_ptr -> up;
-  else
-  go_up = first_non_right_child(node_ptr);
-  if (is_empty(go_up)) return NULL;
-  TLDNode* next = go_up -> up -> right;
-  iter -> tldnode_ptr = next;
-  return next;
+  //TODO that's an ugly trick (below). It follows another ugly trick in return from tldlist_iter_create
+  if (is_empty(node_ptr)) return iter -> tldnode_ptr = node_ptr -> up;
+  left_right = left_or_right(node_ptr);
+  if (!is_empty(node_ptr -> right)){
+    //printf("mozna w prawo\n");
+    return iter -> tldnode_ptr = leftmost(node_ptr -> right);
+  }
+  elif (left_right == -1){ 
+    //printf("nie moge w prawo, ale jestem lewy\n");
+    return iter -> tldnode_ptr = node_ptr -> up;
+  }
+  else{
+    //printf("nie moge w prawo i jestem prawy\n");
+    go_up = first_non_right_child(node_ptr);
+      //printf("first_non_right %s", go_up -> tld);
+      if (go_up == NULL) return NULL;
+      else{
+        TLDNode* next = go_up -> up;
+        return iter -> tldnode_ptr = next;
+      }
+  }
 }
-
 static char* allo_init_tld(char* hostname){
   char* last_dot;
   char* new_mem;
@@ -126,6 +138,7 @@ static char* allo_init_tld(char* hostname){
   for(i = 0, last_dot++; *last_dot; last_dot++, i++){ *(new_mem + i) = *last_dot;}
   return new_mem;
 }
+
 static TLDNode* find_node_rec( TLDNode* node, char* tld_char ){
   int compares;
   bool is_right_empty;
@@ -133,8 +146,7 @@ static TLDNode* find_node_rec( TLDNode* node, char* tld_char ){
   if (is_empty(node)) return node;
   compares = compare_tlds(tld_char, node -> tld);
   is_right_empty = is_empty(node -> right);
-  is_left_empty = is_empty(node -> left);
-  
+  is_left_empty = is_empty(node -> left);  
   if (compares == 0) return node;
   elif (compares < 0){
      //printf("%s < %s\n", tld_char, node -> tld);
@@ -155,31 +167,41 @@ static int hit_node(TLDNode* node, char* tld_char){
   /* this potentially deallocs memory from init_alloc */
   if (is_empty(node)){
     (node -> right) = create_empty_node();
+    (node -> right -> up) = node;
     (node -> left) = create_empty_node();
+    (node -> left -> up) = node;
     node -> tld = tld_char;
     node -> count = 1;
   }
   else{
     (node -> count )++;
+    free(tld_char);
   }
   return node -> count;
 }
-
 int tldlist_add(TLDList* tld, char* hostname, Date* d){
   char* tld_char;
-  TLDNode* correct_node;
-  tld_char = allo_init_tld(hostname);
-  correct_node = find_node(tld, tld_char);
-  hit_node(correct_node, tld_char);
-  return correct_node -> count;
+  //printf("%s", "bad data\n");
+
+  if (date_compare(d, tld -> begin) < 0 || date_compare(tld-> end, d) < 0)
+    {/*printf("%s", "nie ja\n");*/ return 0; }
+  else {
+    //printf("%s", "nie ty\n");
+    (tld -> counter) ++;
+    TLDNode* correct_node;
+    tld_char = allo_init_tld(hostname);
+    correct_node = find_node(tld, tld_char);
+    hit_node(correct_node, tld_char);
+    return 1;
+  }
 }
 
-static void indent(char* appendto, int indentation_level){
+/*static void indent(char* appendto, int indentation_level){
   int i;
   for (i = 0; i < 2*indentation_level; i++) strcat(appendto, " ");
-} 
+} */
 
-void unsafe_inorder_rec(TLDNode* node, char* appendtto, int indentation_level){
+/*static void unsafe_inorder_rec(TLDNode* node, char* appendtto, int indentation_level){
   if (is_empty(node)){
     strcat(appendtto, "(N)");
     return;
@@ -191,43 +213,33 @@ void unsafe_inorder_rec(TLDNode* node, char* appendtto, int indentation_level){
     strcat(appendtto, ")");
     return;
   }
-}
+}*/
 
-char* unsafe_inorder(TLDNode* node){
+/*static char* unsafe_inorder(TLDNode* node){
   char* totalchar = malloc(sizeof(char)*4096); //unsafe, this might be too small
   strcat(totalchar,"#inorder");
   unsafe_inorder_rec(node, totalchar, 2); 
   return totalchar;
+}*/
+
+char* tldnode_tldname(TLDNode *node){
+  return node -> tld;
 }
 
-int main() {
-  char* hostname;
-  int tld;
-  Date* dummydate;
-  TLDNode *node, *node_left, *node_right, *node_ll, *node_lr;
-  TLDList* mylist;
-  dummydate = date_create("11/10/1991");
-  hostname = "adam.kurkiewicz.pl";
-  node = create_empty_node();
-  node_left = create_empty_node();
-  node_ll = create_empty_node();
-  node_lr = create_empty_node();
-  node_right = create_empty_node();
-  node -> left = node_left;
-  node -> left -> tld = "1";
-  node -> left -> left = node_ll;
-  node -> left -> right = node_lr;
-  node -> right = node_right;
-  node -> tld = "2";
-  //printf("%d", strcmp("c", "d"));
-  //return strcmp(tldA, tldB);
-  //printf("%d",strcmp("hello", "aello"));
-  mylist = tldlist_create(dummydate, dummydate);
-  tldlist_add(mylist, ".2", dummydate);
-  tldlist_add(mylist, ".7", dummydate);
-  tldlist_add(mylist, ".1", dummydate);
-  tldlist_add(mylist, ".3", dummydate);
-  tldlist_add(mylist, ".5", dummydate);
-  //printf("%s", unsafe_inorder(mylist -> head));
-  return 0;
+long tldlist_count(TLDList *tld){
+  //printf("%d", tld -> counter);
+  return tld -> counter;
+}
+
+void tldlist_destroy(TLDList *tld){
+  free(tld);
+}
+
+long tldnode_count(TLDNode *node){
+  //printf("%d", node -> count);
+  return node -> count;
+}
+
+void tldlist_iter_destroy(TLDIterator *tld){
+  free(tld);
 }

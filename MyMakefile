@@ -4,11 +4,11 @@
 
 CFLAGS=-std=c99 -Wall -W -pedantic -Wfatal-errors -g
 
-main: date.o sventek.o tldlist.o
-	$(COMP) $(CFLAGS) date.o tldlist.o sventek.o -o main
+main: date.o main.o tldlist.o
+	$(COMP) $(CFLAGS) date.o tldlist.o main.o -o main
 
-sventek.o: tldmonitor_my.c
-	$(COMP) $(CFLAGS) -c tldmonitor_my.c -o sventek.o
+main.o: main_test.c
+	$(COMP) $(CFLAGS) -c main_test.c -o main.o
 
 date.o: date.h date.c
 	$(COMP) $(CFLAGS) -c date.c -o date.o
